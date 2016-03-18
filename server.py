@@ -1,11 +1,11 @@
-from bottle import route, run
+from bottle import route, run, request
 
 keys = {}
 MAX_USES = 100
 
-def _add_key(key):
+def _add_key(key, init=0):
 	if key not in keys:
-		keys[key] = 0
+		keys[key] = init
 
 # Initialize keys
 _add_key('A.a6eb6013db149f27007da636f21872d8')
@@ -32,7 +32,8 @@ def get_key_stats():
 
 @route('/use-key/<key>')
 def use_key(key):
-	keys[key] += 1
+	count = int(request.query.count or 1)
+	keys[key] += count
 	return str(keys[key])
 
 @route('/find-key')

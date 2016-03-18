@@ -38,7 +38,7 @@ def use_key(key):
 
 @route('/find-key')
 def get_usable_key():
-	for k,v in keys.iteritems():
+	for k,v in keys.items():
 		if v < MAX_USES:
 			return k
 	return ''

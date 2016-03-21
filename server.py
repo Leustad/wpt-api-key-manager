@@ -1,11 +1,14 @@
+import socket
+
 from bottle import route, run, request
 
 keys = {}
 MAX_USES = 200
 
+
 def _add_key(key, init=0):
-	if key not in keys:
-		keys[key] = init
+    if key not in keys:
+        keys[key] = init
 
 # Initialize keys
 _add_key('A.a6eb6013db149f27007da636f21872d8')
@@ -34,21 +37,27 @@ _add_key('A.0bd2755cc3f3f185320a258e26eb89a5')
 _add_key('A.90471158f91a4c7e5cc29c788e7bbdc6')
 _add_key('A.44ef92f06023053d453d7bbabd2fccaa')
 
+
 @route('/key-stats')
 def get_key_stats():
-	return keys
+    return keys
+
 
 @route('/use-key/<key>')
 def use_key(key):
-	count = int(request.query.count or 1)
-	keys[key] += count
-	return str(keys[key])
+    count = int(request.query.count or 1)
+    keys[key] += count
+    return str(keys[key])
+
 
 @route('/find-key')
 def get_usable_key():
-	for k,v in keys.items():
-		if v < MAX_USES:
-			return k
-	return ''
+    for k,v in keys.items():
+        if v < MAX_USES:
+            return k
+    return ''
 
-run(host='localhost', port=9050)
+host = socket.gethostname()
+print('Host: ', host)
+
+run(host=host, port=9050)

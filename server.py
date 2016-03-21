@@ -1,7 +1,7 @@
 from bottle import route, run, request
 
 keys = {}
-MAX_USES = 100
+MAX_USES = 200
 
 def _add_key(key, init=0):
 	if key not in keys:

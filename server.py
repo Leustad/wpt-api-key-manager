@@ -11,7 +11,7 @@ def _add_key(key, init=0):
         keys[key] = init
 
 # Initialize keys
-_add_key('A.a6eb6013db149f27007da636f21872d8')
+_add_key('A.f694d68f83cbc0cdd4fb50c443a21f25')
 _add_key('A.e376e1273df03d4d29e4d647b33e9964')
 _add_key('A.a018e44d8d1ecd38a45e226d228bcf64')
 _add_key('A.3c9b23c45c61c645d5455bf86e9a3851')

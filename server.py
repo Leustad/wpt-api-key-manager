@@ -1,9 +1,11 @@
 import socket
+from time import gmtime, strftime
 
 from bottle import route, run, request
 
 keys = {}
 MAX_USES = 200
+CURRENT_DATE = strftime("%Y-%m-%d", gmtime())
 
 
 def _add_key(key, init=0):
@@ -45,9 +47,12 @@ def get_key_stats():
 
 @route('/use-key/<key>')
 def use_key(key):
-    count = int(request.query.count or 1)
-    keys[key] += count
-    return str(keys[key])
+    if CURRENT_DATE == strftime("%Y-%m-%d", gmtime()):
+        count = int(request.query.count or 1)
+        keys[key] += count
+        return str(keys[key])
+    else:
+        exit(0)
 
 
 @route('/find-key')

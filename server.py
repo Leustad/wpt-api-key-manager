@@ -1,4 +1,4 @@
-import random
+from random import shuffle
 import socket
 from time import gmtime, strftime
 
@@ -73,12 +73,13 @@ def use_key(key):
 
 @route('/find-key')
 def get_usable_key():
-    rand = random.randint(0, len(keys))
+    items = list(keys.items())
+    shuffle(items)
 
-    if keys[list(keys)[rand]] < MAX_USES:
-        return list(keys)[rand]
-    else:
-        get_usable_key()
+    for k, v in items:
+        if v < MAX_USES:
+            return k
+    return ''
 
 
 host = socket.gethostname()

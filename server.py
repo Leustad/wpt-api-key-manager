@@ -1,3 +1,4 @@
+import random
 import socket
 from time import gmtime, strftime
 
@@ -11,6 +12,7 @@ PREVIOUS_DATE = strftime("%Y-%m-%d", gmtime())
 def _add_key(key, init=0):
     if key not in keys:
         keys[key] = init
+
 
 # Initialize keys
 _add_key('A.f694d68f83cbc0cdd4fb50c443a21f25')
@@ -71,10 +73,13 @@ def use_key(key):
 
 @route('/find-key')
 def get_usable_key():
-    for k,v in keys.items():
-        if v < MAX_USES:
-            return k
-    return ''
+    rand = random.randint(0, len(keys))
+
+    if keys[list(keys)[rand]] < MAX_USES:
+        return list(keys)[rand]
+    else:
+        get_usable_key()
+
 
 host = socket.gethostname()
 print('Host: ', host)

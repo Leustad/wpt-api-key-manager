@@ -92,7 +92,7 @@ _add_key('A.44ef92f06023053d453d7bbabd2fccaa')
 @route('/key-stats')
 def get_key_stats():
     keys = {}
-    cur = dbmgr.query("SELECT * from ApiKeysTable WHERE Apikey != 'Last Modified'")
+    cur = dbmgr.query("SELECT da from ApiKeysTable WHERE Apikey != 'Last Modified'")
     for row in cur.fetchall():
         keys[row[0]] = row[1]
     return keys
@@ -112,13 +112,23 @@ def reset_count():
 @route('/use-key/<key>')
 def use_key(key):
     global PREVIOUS_DATE
+    date_cur = dbmgr.query("SELECT Date FROM ApiKeysTable WHERE Apikey = 'Last Modified'")
+    db_date = date_cur.fetchone()
     current_date = strftime("%Y-%m-%d", gmtime())
 
-    if PREVIOUS_DATE == current_date:
+    if db_date[0] == current_date:
         keys = {}
         count = int(request.query.count or 1)
+
+        # Finding the current Count
+        db_key_count_cur = dbmgr.query("SELECT Count FROM ApiKeysTable WHERE Apikey = ?", key)
+        current_count = db_key_count_cur.fetchone()
+
+        # Updating the count
+        count += current_count[0]
         dbmgr.query("UPDATE ApiKeysTable SET count = ? WHERE Apikey = ?", count, key)
 
+        # Selecting all to display
         cur = dbmgr.query("SELECT * from ApiKeysTable WHERE Apikey != 'Last Modified'")
 
         for row in cur.fetchall():

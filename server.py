@@ -1,17 +1,64 @@
 from random import shuffle
 import socket
 from time import gmtime, strftime
+import sqlite3
 
 from bottle import route, run, request
 
-keys = {}
 MAX_USES = 200
 PREVIOUS_DATE = strftime("%Y-%m-%d", gmtime())
 
 
+class DatabaseManager(object):
+    def __init__(self, db):
+        self.conn = sqlite3.connect(db)
+        self.cur = self.conn.cursor()
+
+    def query(self, q, *args):
+        self.cur.execute(q, args)
+        self.conn.commit()
+        return self.cur
+
+    def __del__(self):
+        self.conn.close()
+
+dbmgr = DatabaseManager("api_key.db")
+
+now = str(strftime("%Y-%m-%d", gmtime()))
+
+# Checks the Stale data on DB at the start of the server
+# ...by comparing the date on db to the current date
+# If the date is old, resets the count
+data = dbmgr.query("SELECT * FROM ApiKeysTable WHERE Apikey = 'Last Modified'")
+for row in data.fetchall():
+    if row[2] != now:
+
+        # DB is Stale, Reset the Count on DB
+        dbmgr.query("""
+            UPDATE ApiKeysTable SET Count = 0 WHERE Apikey != 'Last Modified';
+        """)
+
+        # Update the date to Current
+        dbmgr.query("""
+            UPDATE ApiKeysTable SET Date = ? WHERE Apikey = 'Last Modified';
+        """, now)
+
+
+def update_count():
+    with sqlite3.connect('api_key.db') as connection:
+        c = connection.cursor()
+
+
 def _add_key(key, init=0):
-    if key not in keys:
-        keys[key] = init
+    """
+    Checks if it's a new key,
+    If it's new, inserts it and initialize the count to ZERO
+    """
+
+    cur = dbmgr.query("SELECT * FROM ApiKeysTable WHERE Apikey=?", key)
+    query_result = cur.fetchall()
+    if len(query_result) == 0:
+        dbmgr.query("INSERT INTO ApiKeysTable VALUES (?, ?, NULL)", key, init)
 
 
 # Initialize keys
@@ -44,15 +91,21 @@ _add_key('A.44ef92f06023053d453d7bbabd2fccaa')
 
 @route('/key-stats')
 def get_key_stats():
+    keys = {}
+    cur = dbmgr.query("SELECT * from ApiKeysTable WHERE Apikey != 'Last Modified'")
+    for row in cur.fetchall():
+        keys[row[0]] = row[1]
     return keys
 
 
 @route('/reset-count')
 def reset_count():
-    global keys
+    keys = {}
     print('Reseting Api-Key Count')
-    for key, value in keys.items():
-        keys[key] = 0
+    dbmgr.query("UPDATE ApiKeysTable SET Count = 0 WHERE Apikey != 'Last Modified'")
+    cur = dbmgr.query("SELECT * from ApiKeysTable WHERE Apikey != 'Last Modified'")
+    for row in cur.fetchall():
+        keys[row[0]] = row[1]
     return keys
 
 
@@ -62,23 +115,41 @@ def use_key(key):
     current_date = strftime("%Y-%m-%d", gmtime())
 
     if PREVIOUS_DATE == current_date:
+        keys = {}
         count = int(request.query.count or 1)
-        keys[key] += count
-        return str(keys[key])
+        dbmgr.query("UPDATE ApiKeysTable SET count = ? WHERE Apikey = ?", count, key)
+
+        cur = dbmgr.query("SELECT * from ApiKeysTable WHERE Apikey != 'Last Modified'")
+
+        for row in cur.fetchall():
+            keys[row[0]] = row[1]
+        return keys
+
     else:
         PREVIOUS_DATE = current_date
-        reset_count()
+        dbmgr.query("""
+            UPDATE ApiKeysTable SET Count = 0 WHERE Apikey != 'Last Modified';
+        """)
+        dbmgr.query("""
+            UPDATE ApiKeysTable SET Date = ? WHERE Apikey = 'Last Modified';
+        """, current_date)
+
         use_key(key)
 
 
 @route('/find-key')
 def get_usable_key():
-    items = list(keys.items())
-    shuffle(items)
+    # SELECT * FROM table ORDER BY RAND () LIMIT 1;
+    select = True
+    while select:
+        cur = dbmgr.query("SELECT * FROM ApiKeysTable ORDER BY random () LIMIT 1")
+        for row in cur.fetchall():
+            if row[1] < MAX_USES:
+                select = False
+                return row[0]
+            else:
+                select = True
 
-    for k, v in items:
-        if v < MAX_USES:
-            return k
     return ''
 
 

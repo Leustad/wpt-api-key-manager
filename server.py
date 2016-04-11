@@ -92,7 +92,7 @@ _add_key('A.44ef92f06023053d453d7bbabd2fccaa')
 @route('/key-stats')
 def get_key_stats():
     keys = {}
-    cur = dbmgr.query("SELECT da from ApiKeysTable WHERE Apikey != 'Last Modified'")
+    cur = dbmgr.query("SELECT * from ApiKeysTable WHERE Apikey != 'Last Modified'")
     for row in cur.fetchall():
         keys[row[0]] = row[1]
     return keys
@@ -149,8 +149,8 @@ def use_key(key):
 
 @route('/find-key')
 def get_usable_key():
-    # SELECT * FROM table ORDER BY RAND () LIMIT 1;
     select = True
+
     while select:
         cur = dbmgr.query("SELECT * FROM ApiKeysTable ORDER BY random () LIMIT 1")
         for row in cur.fetchall():

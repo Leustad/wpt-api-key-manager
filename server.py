@@ -152,7 +152,7 @@ def get_usable_key():
     select = True
 
     while select:
-        cur = dbmgr.query("SELECT * FROM ApiKeysTable ORDER BY random () LIMIT 1")
+        cur = dbmgr.query("SELECT * FROM ApiKeysTable WHERE Apikey != 'Last Modified' ORDER BY random () LIMIT 1 ")
         for row in cur.fetchall():
             if row[1] < MAX_USES:
                 select = False
